@@ -20,6 +20,9 @@ var sEnemy4;
 var lastPt = null;
 var gameOverScreen = false;
 
+var gameTimer = 15;
+var gameTimer = 15;
+
 var score = 0;
 var lives = 3;
 
@@ -62,10 +65,20 @@ aSprite.prototype.renderF = function (width, height){
 aSprite.prototype.render = function(){
     canvasContext.drawImage(this.sImage, this.x, this.y);
 }
+aSprite.prototype.updatePos = function(){
+if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0)
+    {
+        this.x = canvas.width/2;
+        this.y = canvas.height/2;
+        this.image = randomImage();
+    }
+}
 
 aSprite.prototype.update = function(deltaTime){
+
     this.x += deltaTime * this.vx;
     this.y += deltaTime * this.vy;
+
 }
 
 function init(){
@@ -73,7 +86,7 @@ function init(){
     if(canvas.getContext){
 //Set Event Listeners for window, mouse and touch
         randomImage();
-
+        //styleText("black", 8 + "pt arial", "left", "top");
         window.addEventListener('resize', resizeCanvas, false);
         window.addEventListener('orientationchange', resizeCanvas, false);
 
@@ -88,15 +101,15 @@ function init(){
         bkgdImage = new aSprite(0, 0, "BkgdGY.png", 0, 0);
         sJackSkellington = new aSprite(25,canvas.height - 140,"JackSkellington.png", 0, 0);
         sOggieBoogie = new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
-        sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -50,0);
-        sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "JackSkellington.png", -50,0);
-        sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "Oogie_Boogie76x64.png", -50,0);
-        sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "Oogie_Boogie76x64.png", -50,0);
+        sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", 50,30);
+        sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "JackSkellington.png", -70,15);
+        sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -30,60);
+        sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -50,0);
         sPumpkin = new aSprite(sJackSkellington.x+sJackSkellington.sImage.width/2,sJackSkellington.y+(sJackSkellington.sImage.height/2),"Pumpkin.png", 25, 0);
         enemies = [sOggieBoogie, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
         startTimeMS = Date.now();
         lastSpawn = Date.now();
-        console.log("enemies.length" + enemies.length);
+
     }
 }
 
@@ -107,10 +120,9 @@ function resizeCanvas(){
 
 function gameLoop(){
        var elapsed = (Date.now() - startTimeMS)/1000;
-              enemies[1] = sEnemy1;
-              enemies[2] = sEnemy2;
-              enemies[3] = sEnemy3;
-              enemies[4] = sEnemy4;
+
+
+
     update(elapsed);
     render(elapsed);
     startTimeMS = Date.now();
@@ -120,6 +132,10 @@ function gameLoop(){
 
 function render(delta){
     bkgdImage.renderF(canvas.width,canvas.height);
+
+    styleText("black", 8 + "pt arial", "left", "top");
+    canvasContext.fillText("Wave timer: "+ (15-spawnTime), canvas.width/2, canvas.height/2);
+
     sPumpkin.render();
     sJackSkellington.render();
     for (var i = 0; i < enemies.length; i++){
@@ -136,48 +152,34 @@ function randomImage()
 
     var imageReturn =  Math.floor((Math.random()*3));
     console.log(images[imageReturn]);
-    console.log(imageReturn);
     return images[imageReturn];
 }
 
 function update(delta){
     sPumpkin.update(delta);
-    sOggieBoogie.update(delta);
+   // sOggieBoogie.update(delta);
 
     for (var i = 0; i<enemies.length; i++){
-                if (enemies[i] != null)
-                {
-                    enemies[i].update(delta);
-                }
-    }
-
-    if ((spawnTime > 3))
-    {
-        lastSpawn = Date.now();
-
-
-
-        var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
-        var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
-            for (var i = 0; i < enemies.length; i++)
+        if (enemies[i] != null)
+        {
+            enemies[i].update(delta);
+            if (spawnTime > 15)
             {
-                if (enemies[i].x < 0 || enemies[i].x > canvas.width || enemies[i].y < 0 || enemies[i].y > canvas.height)
-                {
-                    var newImage = randomImage();
-                    console.log("enemy " + i + ": " + enemies[i]);
-                    enemies[i] = new aSprite(canvas.width/2, canvas.height/2 , newImage, newVelX,newVelY);
-                }
+                enemies[i].updatePos();
             }
-
-              enemies[1] = sEnemy1;
-              enemies[2] = sEnemy2;
-              enemies[3] = sEnemy3;
-              enemies[4] = sEnemy4;
-              spawnTime = 0;
-
-        console.log(enemies);
-        spawnNumber++;
+        }
     }
+
+    var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
+    var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
+
+
+        enemies[1] = sEnemy1;
+        enemies[2] = sEnemy2;
+        enemies[3] = sEnemy3;
+        enemies[4] = sEnemy4;
+        spawnNumber++;
+    //}
 }
 
 function collisionDetection(sprite1, sprite2)

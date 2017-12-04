@@ -104,7 +104,10 @@ function resizeCanvas(){
 
 function gameLoop(){
        var elapsed = (Date.now() - startTimeMS)/1000;
-
+              enemies[1] = sEnemy1;
+              enemies[2] = sEnemy2;
+              enemies[3] = sEnemy3;
+              enemies[4] = sEnemy4;
     update(elapsed);
     render(elapsed);
     startTimeMS = Date.now();
@@ -171,26 +174,33 @@ function update(delta){
         }
         var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
         var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
-
-              sEnemy1 =  new aSprite(canvas.width/2, canvas.height/2 , "pumpkin.png", -50, -20);
-              sEnemy2 =  new aSprite(canvas.width/2, canvas.height/2 , "JackSkellington.png", newVelX,newVelY);
-              sEnemy3 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
-              sEnemy4 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
+            for (var i = 0; i < enemies.length; i++)
+            {
+                if (enemies[i].x < 0 || enemies[i].x > canvas.width || enemies[i].y < 0 || enemies[i].y > canvas.height)
+                {
+                    console.log("enemy " + i + ": " + enemies[i]);
+                    enemies[i] = new aSprite(canvas.width/2, canvas.height/2 , "JackSkellington.png", newVelX,newVelY);
+                }
+            }
+              //sEnemy1 =  new aSprite(canvas.width/2, canvas.height/2 , "pumpkin.png", -50, -20);
+              //sEnemy2 =  new aSprite(canvas.width/2, canvas.height/2 , "JackSkellington.png", newVelX,newVelY);
+              //sEnemy3 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
+              //sEnemy4 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
               enemies[1] = sEnemy1;
               enemies[2] = sEnemy2;
               enemies[3] = sEnemy3;
               enemies[4] = sEnemy4;
-        spawnTime = 0;
+              spawnTime = 0;
 
         console.log(enemies);
         spawnNumber++;
     }
 }
 
-function collisionDetection(var sprite1, var sprite2)
+function collisionDetection(sprite1, sprite2)
 {
-    if ()
-    {}
+    //if ()
+    //{}
 }
 
 function styleText(txtColour, txtFont, txtAlign, txtBaseline){

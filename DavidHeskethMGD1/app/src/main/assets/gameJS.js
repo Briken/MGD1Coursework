@@ -26,6 +26,7 @@ var lives = 3;
 var startTimeMS;
 
 var enemies = new Array(5);
+var images = ["JackSkellington.png", "Oogie_Boogie76x64.png", "pumpkin.png"];
 
 var spawnTime;
 var lastSpawn;
@@ -71,6 +72,8 @@ function init(){
 
     if(canvas.getContext){
 //Set Event Listeners for window, mouse and touch
+        randomImage();
+
         window.addEventListener('resize', resizeCanvas, false);
         window.addEventListener('orientationchange', resizeCanvas, false);
 
@@ -86,9 +89,9 @@ function init(){
         sJackSkellington = new aSprite(25,canvas.height - 140,"JackSkellington.png", 0, 0);
         sOggieBoogie = new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
         sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -50,0);
-        sEnemy2 =  new aSprite(canvas.width,sJackSkellington.y, "JackSkellington.png", -50,0);
-        sEnemy3 =  new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
-        sEnemy4 =  new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
+        sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "JackSkellington.png", -50,0);
+        sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "Oogie_Boogie76x64.png", -50,0);
+        sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "Oogie_Boogie76x64.png", -50,0);
         sPumpkin = new aSprite(sJackSkellington.x+sJackSkellington.sImage.width/2,sJackSkellington.y+(sJackSkellington.sImage.height/2),"Pumpkin.png", 25, 0);
         enemies = [sOggieBoogie, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
         startTimeMS = Date.now();
@@ -122,10 +125,19 @@ function render(delta){
     for (var i = 0; i < enemies.length; i++){
             if (enemies[i] != null)
             {
-
                 enemies[i].render();
             }
     }
+}
+
+
+function randomImage()
+{
+
+    var imageReturn =  Math.floor((Math.random()*3));
+    console.log(images[imageReturn]);
+    console.log(imageReturn);
+    return images[imageReturn];
 }
 
 function update(delta){
@@ -142,50 +154,21 @@ function update(delta){
     if ((spawnTime > 3))
     {
         lastSpawn = Date.now();
-        console.log("New Spawn");
-        var xory = Math.random()
-        if (xory > 0.5)
-        {
-            spawnY = (canvas.width, (Math.random() * canvas.height) + 1);
 
-            var leftOrRight = Math.random()
-            if (leftOrRight > 0.5)
-            {
-                spawnX = canvas.width;
-            }
-            if (leftOrRight <= 0.5)
-            {
-                spawnX = 0;
-            }
-        }
 
-        if (xory < 0.5)
-        {
-            spawnX = ((Math.random() * canvas.width) + 1);
-            var topOrBottom = Math.random();
-            if (topOrBottom < 0.5)
-            {
-                spawnY = 0;
-            }
-            if (topOrBottom >= 0.5)
-            {
-                spawnY = canvas.height;
-            }
-        }
+
         var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
         var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
             for (var i = 0; i < enemies.length; i++)
             {
                 if (enemies[i].x < 0 || enemies[i].x > canvas.width || enemies[i].y < 0 || enemies[i].y > canvas.height)
                 {
+                    var newImage = randomImage();
                     console.log("enemy " + i + ": " + enemies[i]);
-                    enemies[i] = new aSprite(canvas.width/2, canvas.height/2 , "JackSkellington.png", newVelX,newVelY);
+                    enemies[i] = new aSprite(canvas.width/2, canvas.height/2 , newImage, newVelX,newVelY);
                 }
             }
-              //sEnemy1 =  new aSprite(canvas.width/2, canvas.height/2 , "pumpkin.png", -50, -20);
-              //sEnemy2 =  new aSprite(canvas.width/2, canvas.height/2 , "JackSkellington.png", newVelX,newVelY);
-              //sEnemy3 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
-              //sEnemy4 =  new aSprite(canvas.width/2, canvas.height/2 , "Oogie_Boogie76x64.png", newVelX,newVelY);
+
               enemies[1] = sEnemy1;
               enemies[2] = sEnemy2;
               enemies[3] = sEnemy3;

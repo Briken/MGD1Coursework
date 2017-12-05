@@ -17,8 +17,12 @@ var sEnemy2;
 var sEnemy3;
 var sEnemy4;
 
-var lastPt = null;
+var menuScreen = true;
+var gameScreen = false;
 var gameOverScreen = false;
+
+var lastPt = null;
+
 
 var gameTimer = 15;
 var gameTimer = 15;

@@ -182,10 +182,16 @@ function update(delta){
     //}
 }
 
-function collisionDetection(sprite1, sprite2)
+function collisionDetection()
 {
-    //if ()
-    //{}
+    for (var i = 0; i < enemies.length; i++)
+    {
+            if (lastPt.x < enemies[i].x + enemies[i].sImage.width && lastPt.x > enemies[i].x &&
+            lastPt.y > enemies[i].y && lastPt.y < enemies[i].y + enemies[i].sImage.height)
+            {
+                console.log ("Clicked an enemy");
+            }
+    }
 }
 
 function styleText(txtColour, txtFont, txtAlign, txtBaseline){
@@ -203,13 +209,14 @@ function touchUp(evt){
 
     function touchDown(evt){
     evt.preventDefault();
-    if(gameOverScreenScreen){
+    //if(gameOverScreenScreen){
         //player1Score = 0;
         //player2Score = 0;
         //showingWinScreen = false;
-        return;
-    }
+    //    return;
+   //}
     touchXY(evt);
+    collisionDetection();
 }
 
     function touchXY(evt){

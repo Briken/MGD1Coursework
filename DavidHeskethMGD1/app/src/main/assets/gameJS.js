@@ -14,7 +14,7 @@ var firstButton;
 var sPumpkin;
 var bkgdImage;
 var sJackSkellington;
-var sOggieBoogie;
+var sEnemy0;
 var sEnemy1;
 var sEnemy2;
 var sEnemy3;
@@ -42,6 +42,9 @@ var images = ["JackSkellington.png", "Oogie_Boogie76x64.png", "pumpkin.png"];
 var backgroundSound = new Audio();
 backgroundSound.src = "RoyaltyFreesoundeffectsWoodlandAmbient1.mp3";
 backgroundSound.volume = 0.5;
+
+var shootSound = new Audio();
+shootSound.src = "Gun+Shot2.mp3";
 
 var spawnTime;
 var lastSpawn;
@@ -116,13 +119,13 @@ function init(){
 
         bkgdImage = new aSprite(0, 0, "BkgdGY.png", 0, 0);
         sJackSkellington = new aSprite(25,canvas.height - 140,"JackSkellington.png", 0, 0);
-        sOggieBoogie = new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
-        sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", 50,30);
-        sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "JackSkellington.png", -70,15);
-        sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -30,60);
-        sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "pumpkin.png", -50,0);
+        sEnemy0 = new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
+        sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", 50,30);
+        sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -70,15);
+        sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -30,60);
+        sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -50,0);
         sPumpkin = new aSprite(sJackSkellington.x+sJackSkellington.sImage.width/2,sJackSkellington.y+(sJackSkellington.sImage.height/2),"Pumpkin.png", 25, 0);
-        enemies = [sOggieBoogie, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
+        enemies = [sEnemy0, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
         startTimeMS = Date.now();
         lastSpawn = Date.now();
 
@@ -157,8 +160,8 @@ function render(delta){
     if (gameScreen == true)
     {
         bkgdImage.renderF(canvas.width,canvas.height);
-        styleText("black", 8 + "pt arial", "left", "top");
-        canvasContext.fillText("Wave timer: "+ (15-spawnTime), canvas.width/2, canvas.height/2);
+        styleText("black", 20 + "pt arial", "left", "top");
+        canvasContext.fillText("Wave timer: "+ (30-spawnTime), canvas.width/8, canvas.height/5);
         sPumpkin.render();
         sJackSkellington.render();
         for (var i = 0; i < enemies.length; i++){
@@ -187,27 +190,28 @@ if (menuScreen == true)
 }
     if (gameScreen == true)
     {
+        if (spawnTime > 30)
+        {
+            enemies[0] = sEnemy0;
+            enemies[1] = sEnemy1;
+            enemies[2] = sEnemy2;
+            enemies[3] = sEnemy3;
+            enemies[4] = sEnemy4;
+        }
         sPumpkin.update(delta);
         for (var i = 0; i<enemies.length; i++){
             if (enemies[i] != null)
             {
                 enemies[i].update(delta);
-                if (spawnTime > 15)
+                if (spawnTime > 30)
                 {
                     enemies[i].updatePos();
                 }
             }
         }
-
         var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
         var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
-
-
-            enemies[1] = sEnemy1;
-            enemies[2] = sEnemy2;
-            enemies[3] = sEnemy3;
-            enemies[4] = sEnemy4;
-            spawnNumber++;
+        spawnNumber++;
     }
 }
 
@@ -228,11 +232,16 @@ function collisionDetection()
     {
         for (var i = 0; i < enemies.length; i++)
         {
+            if (enemies[i] != null)
+            {
                 if (lastPt.x < enemies[i].x + enemies[i].sImage.width && lastPt.x > enemies[i].x &&
                 lastPt.y > enemies[i].y && lastPt.y < enemies[i].y + enemies[i].sImage.height)
                 {
-                    console.log ("Clicked an enemy");
+                    canvasContext.clearRect(enemies[i].x, enemies[i].y, enemies[i].sImage.width, enemies[i].sImage.height);
+                    enemies[i] = null;
+                    score += 2;
                 }
+            }
         }
     }
 }
@@ -259,6 +268,7 @@ function touchUp(evt){
     //    return;
    //}
     touchXY(evt);
+    shootSound.play();
     collisionDetection();
 }
 

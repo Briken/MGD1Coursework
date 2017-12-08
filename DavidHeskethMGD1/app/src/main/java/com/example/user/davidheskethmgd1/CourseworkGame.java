@@ -27,7 +27,7 @@ int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 
         setContentView(R.layout.activity_main);
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         webView = (WebView)findViewById(R.id.webview1);
 
         webView.getSettings().setJavaScriptEnabled(true);

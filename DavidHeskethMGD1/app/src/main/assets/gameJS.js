@@ -19,6 +19,9 @@ var sEnemy1;
 var sEnemy2;
 var sEnemy3;
 var sEnemy4;
+var rButton;
+
+var endingImage;
 
 var backSndPlaying = false;
 var menuScreen = true;
@@ -28,11 +31,16 @@ var gameOverScreen = false;
 var lastPt = null;
 
 
-var gameTimer = 15;
-var gameTimer = 15;
+var gameTimer = 60;
+var startTimer = 60;
+var displayTimer;
+var round =1;
+var enemyHit = true;
 
 var score = 0;
 var lives = 3;
+var ammo;
+var maxAmmo = 5;
 
 var startTimeMS;
 
@@ -96,6 +104,7 @@ aSprite.prototype.update = function(deltaTime){
 
 }
 
+
 function init(){
 
     if(canvas.getContext){
@@ -117,9 +126,10 @@ function init(){
         scene1Image = new aSprite(0, 0, "scene1.png", 0, 0);
         firstButton = new aSprite(canvas.width/2, canvas.height/2, "button.png", 0, 0);
 
+        rButton = new aSprite((canvas.width/5) *4, canvas.height/10, "rButton.png", 0, 0);
         bkgdImage = new aSprite(0, 0, "BkgdGY.png", 0, 0);
         sJackSkellington = new aSprite(25,canvas.height - 140,"JackSkellington.png", 0, 0);
-        sEnemy0 = new aSprite(canvas.width,sJackSkellington.y, "Oogie_Boogie76x64.png", -50,0);
+        sEnemy0 = new aSprite(canvas.width,sJackSkellington.y, "duck.png", -50,-35);
         sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", 50,30);
         sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -70,15);
         sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -30,60);
@@ -129,6 +139,8 @@ function init(){
         startTimeMS = Date.now();
         lastSpawn = Date.now();
 
+        endingImage = new aSprite(0, 0, "endScene.png", 0, 0);
+        replayButton = new aSprite(canvas.width/2, canvas.height/2, "replay.png", 0, 0);
     }
 }
 
@@ -140,15 +152,17 @@ function resizeCanvas(){
 function gameLoop(){
     if (backSndPlaying == false)
     {
-         backgroundSound.play();
-         backSndPlaying = true;
+        backgroundSound.play();
+        backgroundSound.loop = true;
+        backSndPlaying = true;
     }
+    //setInterval(backgroundSound.play, 179000);
     var elapsed = (Date.now() - startTimeMS)/1000;
     update(elapsed);
     render(elapsed);
     startTimeMS = Date.now();
-    spawnTime = (startTimeMS - lastSpawn)/1000;
     requestAnimationFrame(gameLoop);
+    gameTimer-=elapsed;
 }
 
 function render(delta){
@@ -161,7 +175,12 @@ function render(delta){
     {
         bkgdImage.renderF(canvas.width,canvas.height);
         styleText("black", 20 + "pt arial", "left", "top");
-        canvasContext.fillText("Wave timer: "+ (30-spawnTime), canvas.width/8, canvas.height/5);
+        rButton.render();
+
+        displayTimer = Math.round(gameTimer);
+        canvasContext.fillText("Wave timer: "+ (displayTimer) + " Wave Number: " + round, canvas.width/8, canvas.height/5);
+        canvasContext.fillText("Score: "+ (score), canvas.width/4, canvas.height/8);
+        canvasContext.fillText("Ammo: "+ (ammo), (canvas.width/6)*5, (canvas.height/6)*5);
         sPumpkin.render();
         sJackSkellington.render();
         for (var i = 0; i < enemies.length; i++){
@@ -170,6 +189,13 @@ function render(delta){
                     enemies[i].render();
                 }
         }
+    }
+
+    if (gameOverScreen == true)
+    {
+         endingImage.renderF(canvas.width, canvas.height);
+         replayButton.render();
+         canvasContext.fillText("Score: "+ (score), canvas.width/2, canvas.height/2);
     }
 }
 
@@ -190,7 +216,8 @@ if (menuScreen == true)
 }
     if (gameScreen == true)
     {
-        if (spawnTime > 30)
+        rButton.update(delta);
+        if (gameTimer < 0)
         {
             enemies[0] = sEnemy0;
             enemies[1] = sEnemy1;
@@ -203,20 +230,64 @@ if (menuScreen == true)
             if (enemies[i] != null)
             {
                 enemies[i].update(delta);
-                if (spawnTime > 30)
+                if (gameTimer < 0)
                 {
                     enemies[i].updatePos();
+                    lastSpawn = Date.now();
                 }
             }
         }
+        if (gameTimer < 0)
+        {
+            round++;
+            gameTimer =startTimer/round;
+            if (round == 6)
+            {
+                gameScreen = false;
+                gameOverScreen = true;
+            }
+        }
+
         var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
         var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
         spawnNumber++;
+    }
+    if (gameOverScreen)
+    {
+
     }
 }
 
 function collisionDetection()
 {
+    if (gameScreen == true)
+    {
+        if (ammo > 0)
+        {
+            ammo--;
+            for (var i = 0; i < enemies.length; i++)
+            {
+                if (enemies[i] != null)
+                {
+                    if (lastPt.x < enemies[i].x + enemies[i].sImage.width && lastPt.x > enemies[i].x &&
+                    lastPt.y > enemies[i].y && lastPt.y < enemies[i].y + enemies[i].sImage.height)
+                    {
+                        canvasContext.clearRect(enemies[i].x, enemies[i].y, enemies[i].sImage.width, enemies[i].sImage.height);
+                        enemies[i] = null;
+                        score += 2;
+                        enemyHit = true;
+                    }
+                }
+            }
+        }
+        if (lastPt.x < rButton.x + rButton.sImage.width && lastPt.x > rButton.x &&
+            lastPt.y > rButton.y && lastPt.y < rButton.y + rButton.sImage.height)
+        {
+            enemyHit = true;
+            ammo = maxAmmo;
+        }
+    }
+
     if (menuScreen == true)
     {
         if (lastPt.x < firstButton.x + firstButton.sImage.width && lastPt.x > firstButton.x &&
@@ -225,25 +296,29 @@ function collisionDetection()
             menuScreen = false;
             gameScreen = true;
             console.log ("Clicked an enemy");
+            ammo = maxAmmo;
+            enemyHit = true;
         }
     }
-
-    if (gameScreen == true)
+    if (gameOverScreen == true)
     {
-        for (var i = 0; i < enemies.length; i++)
-        {
-            if (enemies[i] != null)
-            {
-                if (lastPt.x < enemies[i].x + enemies[i].sImage.width && lastPt.x > enemies[i].x &&
-                lastPt.y > enemies[i].y && lastPt.y < enemies[i].y + enemies[i].sImage.height)
-                {
-                    canvasContext.clearRect(enemies[i].x, enemies[i].y, enemies[i].sImage.width, enemies[i].sImage.height);
-                    enemies[i] = null;
-                    score += 2;
-                }
-            }
-        }
+         if (lastPt.x < replayButton.x + replayButton.sImage.width && lastPt.x > replayButton.x &&
+             lastPt.y > replayButton.y && lastPt.y < replayButton.y + replayButton.sImage.height)
+         {
+             wave = 1;
+             score = 0;
+             gameOverScreen = false;
+             menuScreen = true;
+             enemyHit = true;
+         }
+
     }
+    if (enemyHit == false)
+    {
+       score--;
+
+    }
+    enemyHit = false;
 }
 
 function styleText(txtColour, txtFont, txtAlign, txtBaseline){
@@ -259,17 +334,29 @@ function touchUp(evt){
     lastPt = null;
 }
 
-    function touchDown(evt){
+function touchDown(evt){
     evt.preventDefault();
-    //if(gameOverScreenScreen){
-        //player1Score = 0;
-        //player2Score = 0;
-        //showingWinScreen = false;
-    //    return;
-   //}
     touchXY(evt);
-    shootSound.play();
-    collisionDetection();
+    if (gameScreen)
+        {
+            if (ammo > 0)
+            {
+                shootSound.play();
+                collisionDetection();
+            }
+            if (ammo == 0)
+            {
+                collisionDetection();
+            }
+        }
+    if (menuScreen)
+    {
+        collisionDetection();
+    }
+    if(gameOverScreen)
+    {
+        collisionDetection();
+    }
 }
 
     function touchXY(evt){

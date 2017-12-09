@@ -28,8 +28,14 @@ var menuScreen = true;
 var gameScreen = false;
 var gameOverScreen = false;
 
+var highScore;
+var oldScore;
+var newHighScore;
+
 var lastPt = null;
 
+//Create an array for the particles
+var particles = [];
 
 var gameTimer = 60;
 var startTimer = 60;
@@ -60,6 +66,11 @@ var lastSpawn;
 function load(){
     canvas = document.getElementById('gameCanvas');
     canvasContext = canvas.getContext('2d');
+
+    if (localStorage.getItem('high') == null)
+    {
+        localStorage.setItem('high', 0);
+    }
 
     init();
 
@@ -183,6 +194,10 @@ function render(delta){
         canvasContext.fillText("Ammo: "+ (ammo), (canvas.width/6)*5, (canvas.height/6)*5);
         sPumpkin.render();
         sJackSkellington.render();
+        if (particles.length > 0)
+        {
+            renderP(canvasContext);
+        }
         for (var i = 0; i < enemies.length; i++){
                 if (enemies[i] != null)
                 {
@@ -195,7 +210,14 @@ function render(delta){
     {
          endingImage.renderF(canvas.width, canvas.height);
          replayButton.render();
-         canvasContext.fillText("Score: "+ (score), canvas.width/2, canvas.height/2);
+         if (newHighScore)
+         {
+            canvasContext.fillText("Congrats! You got a new HighScore: "+ score + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
+         }
+         if (!newHighScore)
+         {
+            canvasContext.fillText("Congrats! You got: "+ score + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
+         }
     }
 }
 
@@ -245,6 +267,8 @@ if (menuScreen == true)
             {
                 gameScreen = false;
                 gameOverScreen = true;
+                highScore = localStorage.getItem('high')
+                EndSceneSetup();
             }
         }
 
@@ -273,6 +297,7 @@ function collisionDetection()
                     lastPt.y > enemies[i].y && lastPt.y < enemies[i].y + enemies[i].sImage.height)
                     {
                         canvasContext.clearRect(enemies[i].x, enemies[i].y, enemies[i].sImage.width, enemies[i].sImage.height);
+                        createParticleArray(enemies[i].x, enemies[i].y, canvasContext);
                         enemies[i] = null;
                         score += 2;
                         enemyHit = true;
@@ -297,6 +322,9 @@ function collisionDetection()
             gameScreen = true;
             console.log ("Clicked an enemy");
             ammo = maxAmmo;
+            round = 1;
+            score = 0;
+            gameTimer = startTimer;
             enemyHit = true;
         }
     }
@@ -305,8 +333,7 @@ function collisionDetection()
          if (lastPt.x < replayButton.x + replayButton.sImage.width && lastPt.x > replayButton.x &&
              lastPt.y > replayButton.y && lastPt.y < replayButton.y + replayButton.sImage.height)
          {
-             wave = 1;
-             score = 0;
+
              gameOverScreen = false;
              menuScreen = true;
              enemyHit = true;
@@ -366,4 +393,104 @@ function touchDown(evt){
         var touchY = evt.touches[0].pageY - canvas.offsetTop;
     }
     lastPt = {x:evt.touches[0].pageX, y:evt.touches[0].pageY};
+}
+
+
+
+
+
+
+
+function createParticleArray(xPos, yPos, theCanvasContext)
+{
+    //Adds 10 particles to thearray with random positions
+    for(var i = 0; i < 10; i++)
+    {
+        particles.push(new create(xPos, yPos));
+    }
+    renderP(theCanvasContext);
+}
+
+function create(startX, startY)
+{
+    this.x = startX;
+    this.y = startY;
+
+    //Add random velocity to each particle
+
+    this.vx = Math.random()*5 - 2;
+    this.vy = Math.random()*5 - 2;
+
+    //Random colours
+
+    var red = Math.random()*255>>0;
+    var green = Math.random()*255>>0;
+    var blue = Math.random()*255>>0;
+    this.color="rgba("+red+","+green+","+blue+",0.5)";
+    //Random size
+    this.radius = Math.random()*5;
+    //fade value
+    this.fade = Math.random()*500;
+    //particle dead
+    this.dead = false;
+    }
+
+//Render and move the particle
+function renderP(theCanvasContext)
+{
+    var aCanvasContext = theCanvasContext;
+    aCanvasContext.globalCompositeOperation = "source - over";
+    //Reduce the opacity of the BG paint
+    aCanvasContext.fillStyle = "rgba(0, 0, 0, 0.3)";
+
+    //Blend the particle with the background
+    //aCanvasContext.globalCompositeOperation = "lighter";
+    //Render the particles
+
+    for (var t = 0; t < particles.length; t++)
+    {
+        var p = particles[t];
+        aCanvasContext.beginPath();
+
+    //Mix the colours
+
+    var gradient = aCanvasContext.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+    gradient.addColorStop(0, "white");
+    gradient.addColorStop(0.4, "white");
+    gradient.addColorStop(0.4, p.color);
+    gradient.addColorStop(1, "black");
+    aCanvasContext.fillStyle = gradient;
+
+    aCanvasContext.arc(p.x, p.y, p.radius, Math.PI*2, false);
+    aCanvasContext.fill();
+    //Addvelocity
+    p.x += p.vx;
+    p.y += p.vy;
+    //Decrease fade and if particle is dead removeit
+    p.fade -= 10;
+    if (p.fade < 0)
+    {
+        p.dead = true;
+    }
+    if(p.dead == true)
+    {
+        particles.splice(t,1);
+    }
+    }
+}
+
+function EndSceneSetup()
+{
+    if (highScore < score)
+        {
+            oldScore = highScore;
+            console.log ("new high score: " + score + " old high score: " + highScore);
+            localStorage.setItem('high', score)
+            newHighScore = true;
+        }
+        else
+        {
+            oldScore = highScore;
+            newHighScore = false;
+        }
 }

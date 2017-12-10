@@ -10,10 +10,13 @@ var spawnNumber;
 
 var scene1Image;
 var firstButton;
+var endlessButton;
 
-var sPumpkin;
+var endlessScene;
+var highEndless;
+
 var bkgdImage;
-var sJackSkellington;
+var sHunter;
 var sEnemy0;
 var sEnemy1;
 var sEnemy2;
@@ -31,6 +34,10 @@ var gameOverScreen = false;
 var highScore;
 var oldScore;
 var newHighScore;
+var newEndless;
+var displayScore;
+
+var setToSix;
 
 var lastPt = null;
 
@@ -51,7 +58,7 @@ var maxAmmo = 5;
 var startTimeMS;
 
 var enemies = new Array(5);
-var images = ["JackSkellington.png", "Oogie_Boogie76x64.png", "pumpkin.png"];
+
 
 var backgroundSound = new Audio();
 backgroundSound.src = "RoyaltyFreesoundeffectsWoodlandAmbient1.mp3";
@@ -60,6 +67,15 @@ backgroundSound.volume = 0.5;
 var shootSound = new Audio();
 shootSound.src = "Gun+Shot2.mp3";
 
+var quack = new Audio();
+quack.src = "Quack!.mp3"
+
+var emptySound = new Audio();
+emptySound.src = "Gun+Empty.mp3";
+
+var reloadSound = new Audio();
+reloadSound.src = "Gun+Reload.mp3";
+
 var spawnTime;
 var lastSpawn;
 //window.onload =
@@ -67,11 +83,7 @@ function load(){
     canvas = document.getElementById('gameCanvas');
     canvasContext = canvas.getContext('2d');
 
-    if (localStorage.getItem('high') == null)
-    {
-        localStorage.setItem('high', 0);
-    }
-
+    HighScoreCheck();
     init();
 
     canvasX = canvas.width/2;
@@ -102,10 +114,16 @@ aSprite.prototype.render = function(){
 aSprite.prototype.updatePos = function(){
 if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0)
     {
-        this.x = canvas.width/2;
-        this.y = canvas.height/2;
-        this.image = randomImage();
+        this.x = GenRandom(canvas.width/5, (canvas.width/5)*4);
+        this.y = GenRandom(canvas.height/5, (canvas.height/5)*4);
+        this.vx = GenRandom(100, -100);
+        this.vy = GenRandom(100, -100);
     }
+}
+
+function GenRandom(max, min)
+{
+    return Math.random()*(max -  min) + min;
 }
 
 aSprite.prototype.update = function(deltaTime){
@@ -121,7 +139,6 @@ function init(){
     if(canvas.getContext){
 //Set Event Listeners for window, mouse and touch
 
-        randomImage();
         //styleText("black", 8 + "pt arial", "left", "top");
         window.addEventListener('resize', resizeCanvas, false);
         window.addEventListener('orientationchange', resizeCanvas, false);
@@ -135,17 +152,19 @@ function init(){
         resizeCanvas();
 
         scene1Image = new aSprite(0, 0, "scene1.png", 0, 0);
-        firstButton = new aSprite(canvas.width/2, canvas.height/2, "button.png", 0, 0);
+        firstButton = new aSprite(canvas.width/2, canvas.height/5, "button.png", 0, 0);
+        endlessButton = new aSprite(canvas.width/2, canvas.height/2, "endlessButton.png", 0, 0);
+
 
         rButton = new aSprite((canvas.width/5) *4, canvas.height/10, "rButton.png", 0, 0);
         bkgdImage = new aSprite(0, 0, "BkgdGY.png", 0, 0);
-        sJackSkellington = new aSprite(25,canvas.height - 140,"JackSkellington.png", 0, 0);
-        sEnemy0 = new aSprite(canvas.width,sJackSkellington.y, "duck.png", -50,-35);
+        sHunter = new aSprite(25,canvas.height - 140,"hunter.png", 0, 0);
+        sEnemy0 = new aSprite(canvas.width,sHunter.y, "duck.png", -50,-35);
         sEnemy1 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", 50,30);
         sEnemy2 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -70,15);
         sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -30,60);
         sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -50,0);
-        sPumpkin = new aSprite(sJackSkellington.x+sJackSkellington.sImage.width/2,sJackSkellington.y+(sJackSkellington.sImage.height/2),"Pumpkin.png", 25, 0);
+
         enemies = [sEnemy0, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
         startTimeMS = Date.now();
         lastSpawn = Date.now();
@@ -177,12 +196,13 @@ function gameLoop(){
 }
 
 function render(delta){
-    if (menuScreen == true)
+    if (menuScreen)
     {
         scene1Image.renderF(canvas.width,canvas.height);
         firstButton.render();
+        endlessButton.render();
     }
-    if (gameScreen == true)
+    if (gameScreen || endlessScene)
     {
         bkgdImage.renderF(canvas.width,canvas.height);
         styleText("black", 20 + "pt arial", "left", "top");
@@ -192,8 +212,8 @@ function render(delta){
         canvasContext.fillText("Wave timer: "+ (displayTimer) + " Wave Number: " + round, canvas.width/8, canvas.height/5);
         canvasContext.fillText("Score: "+ (score), canvas.width/4, canvas.height/8);
         canvasContext.fillText("Ammo: "+ (ammo), (canvas.width/6)*5, (canvas.height/6)*5);
-        sPumpkin.render();
-        sJackSkellington.render();
+
+        sHunter.render();
         if (particles.length > 0)
         {
             renderP(canvasContext);
@@ -210,33 +230,34 @@ function render(delta){
     {
          endingImage.renderF(canvas.width, canvas.height);
          replayButton.render();
-         if (newHighScore)
+         if (newHighScore && newEndless)
          {
-            canvasContext.fillText("Congrats! You got a new HighScore: "+ score + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
+            canvasContext.fillText("Congrats! You got a new HighScore: "+ localStorage.getItem('high') + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
          }
-         if (!newHighScore)
+         if (!newHighScore && newEndless)
          {
-            canvasContext.fillText("Congrats! You got: "+ score + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
+            canvasContext.fillText("Congrats! You got: "+ displayScore + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
+         }
+         if (newEndless)
+         {
+            canvasContext.fillText("Congrats! You got a new endless mode HighScore: "+ localStorage.getItem('endless') + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
+         }
+         if (!newEndless)
+         {
+            canvasContext.fillText("Congrats! You got: "+ displayScore + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
          }
     }
 }
 
-
-function randomImage()
-{
-
-    var imageReturn =  Math.floor((Math.random()*3));
-    console.log(images[imageReturn]);
-    return images[imageReturn];
-}
 
 function update(delta){
 
 if (menuScreen == true)
 {
     firstButton.update(delta);
+    endlessButton.update(delta);
 }
-    if (gameScreen == true)
+    if (gameScreen || endlessScene)
     {
         rButton.update(delta);
         if (gameTimer < 0)
@@ -247,7 +268,7 @@ if (menuScreen == true)
             enemies[3] = sEnemy3;
             enemies[4] = sEnemy4;
         }
-        sPumpkin.update(delta);
+
         for (var i = 0; i<enemies.length; i++){
             if (enemies[i] != null)
             {
@@ -262,19 +283,27 @@ if (menuScreen == true)
         if (gameTimer < 0)
         {
             round++;
+            setToSix = true;
             gameTimer =startTimer/round;
-            if (round == 6)
+            if (gameScreen)
             {
-                gameScreen = false;
-                gameOverScreen = true;
-                highScore = localStorage.getItem('high')
-                EndSceneSetup();
+                if (round == 6)
+                {
+                    EndSceneSetup();
+                    gameScreen = false;
+                    gameOverScreen = true;
+                    highScore = localStorage.getItem('high')
+                }
+            }
+            if (endlessScene)
+            {
+                if (startTimer/round < 6 && setToSix)
+                {
+                    gameTimer = 6
+                    setToSix = false;
+                }
             }
         }
-
-        var newVelX = Math.sqrt((sJackSkellington.x - spawnX)^2)
-        var newVelY = Math.sqrt((sJackSkellington.y - spawnY)^2)
-        spawnNumber++;
     }
     if (gameOverScreen)
     {
@@ -284,7 +313,7 @@ if (menuScreen == true)
 
 function collisionDetection()
 {
-    if (gameScreen == true)
+    if (gameScreen || endlessScene)
     {
         if (ammo > 0)
         {
@@ -298,6 +327,7 @@ function collisionDetection()
                     {
                         canvasContext.clearRect(enemies[i].x, enemies[i].y, enemies[i].sImage.width, enemies[i].sImage.height);
                         createParticleArray(enemies[i].x, enemies[i].y, canvasContext);
+                        quack.play();
                         enemies[i] = null;
                         score += 2;
                         enemyHit = true;
@@ -305,11 +335,23 @@ function collisionDetection()
                 }
             }
         }
+
         if (lastPt.x < rButton.x + rButton.sImage.width && lastPt.x > rButton.x &&
             lastPt.y > rButton.y && lastPt.y < rButton.y + rButton.sImage.height)
         {
             enemyHit = true;
             ammo = maxAmmo;
+            reloadSound.play();
+        }
+
+        if (lastPt.x < sHunter.x + sHunter.sImage.width && lastPt.x > sHunter.x &&
+            lastPt.y > sHunter.y && lastPt.y < sHunter.y + sHunter.sImage.height)
+        {
+            highEndless = localStorage.getItem('endless');
+            EndSceneSetup();
+            enemyHit = true;
+            endlessScene = false;
+            gameOverScreen = true;
         }
     }
 
@@ -327,6 +369,19 @@ function collisionDetection()
             gameTimer = startTimer;
             enemyHit = true;
         }
+        if (lastPt.x < endlessButton.x + endlessButton.sImage.width && lastPt.x > endlessButton.x &&
+            lastPt.y > endlessButton.y && lastPt.y < endlessButton.y + endlessButton.sImage.height)
+        {
+            menuScreen = false;
+            endlessScene = true;
+            console.log ("Clicked an enemy");
+            ammo = maxAmmo;
+            round = 1;
+            score = 0;
+            gameTimer = startTimer;
+            enemyHit = true;
+        }
+
     }
     if (gameOverScreen == true)
     {
@@ -364,7 +419,7 @@ function touchUp(evt){
 function touchDown(evt){
     evt.preventDefault();
     touchXY(evt);
-    if (gameScreen)
+    if (gameScreen || endlessScene)
         {
             if (ammo > 0)
             {
@@ -374,6 +429,7 @@ function touchDown(evt){
             if (ammo == 0)
             {
                 collisionDetection();
+                emptySound.play();
             }
         }
     if (menuScreen)
@@ -481,16 +537,49 @@ function renderP(theCanvasContext)
 
 function EndSceneSetup()
 {
-    if (highScore < score)
+    if (gameScreen)
+    {
+        if (highScore < score)
         {
             oldScore = highScore;
             console.log ("new high score: " + score + " old high score: " + highScore);
             localStorage.setItem('high', score)
             newHighScore = true;
+            newEndless = false;
         }
         else
         {
             oldScore = highScore;
+            displayScore = score;
             newHighScore = false;
+            newEndless = false;
         }
+    }
+    if (endlessScene)
+    {
+        if (highEndless < score)
+        {
+            oldScore = highEndless;
+            localStorage.setItem('endless', score);
+            newEndlessw = true;
+        }
+        else
+        {
+            oldScore = highEndless;
+            displayScore = score;
+            newEndless = false;
+        }
+    }
+}
+
+function HighScoreCheck()
+{
+    if (localStorage.getItem('high') == null)
+    {
+        localStorage.setItem('high', 0);
+    }
+    if (localStorage.getItem('endless') == null)
+    {
+        localStorage.setItem('endless', 0);
+    }
 }

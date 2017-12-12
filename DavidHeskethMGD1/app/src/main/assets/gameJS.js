@@ -162,7 +162,7 @@ function init(){
 
         endingImage = new aSprite(0, 0, "endScene.png", 0, 0);
         replayButton = new aSprite(canvas.width/2, canvas.height/2, "replay.png", 0, 0);
-
+        styleText("black", 20 + "pt arial", "left", "top");
         enemies = [sEnemy0, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
         startTimeMS = Date.now();
     }
@@ -201,7 +201,7 @@ function render(delta){
     if (gameScreen || endlessScene)
     {
         bkgdImage.renderF(canvas.width,canvas.height);
-        styleText("black", 20 + "pt arial", "left", "top");
+
         rButton.render();
 
         displayTimer = Math.round(gameTimer);
@@ -496,7 +496,7 @@ function renderP(theCanvasContext)
     aCanvasContext.fillStyle = "rgba(0, 0, 0, 0.3)";
 
     //Blend the particle with the background
-    //aCanvasContext.globalCompositeOperation = "lighter";
+
     //Render the particles
 
     for (var t = 0; t < particles.length; t++)

@@ -29,6 +29,7 @@ int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         webView = (WebView)findViewById(R.id.webview1);
+        webView.getSettings().setDomStorageEnabled(true);
         webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.loadUrl("file:///android_asset/gameHTML.html");

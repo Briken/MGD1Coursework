@@ -73,9 +73,9 @@ reloadSound.src = "Gun+Reload.mp3";
 
 //onload function for window.
 function load(){
+
     canvas = document.getElementById('gameCanvas');
     canvasContext = canvas.getContext('2d');
-    localStorage.clear();
     highScoreCheck();
     init();
 

@@ -1,12 +1,7 @@
 var canvas;
 var canvasContext;
-var canvasX;
-var canvasY;
-var mouseIsDown = 0;
 
-var spawnX;
-var spawnY;
-var spawnNumber;
+
 
 var scene1Image;
 var firstButton;
@@ -51,7 +46,7 @@ var round =1;
 var enemyHit = true;
 
 var score = 0;
-var lives = 3;
+
 var ammo;
 var maxAmmo = 5;
 
@@ -76,25 +71,23 @@ emptySound.src = "Gun+Empty.mp3";
 var reloadSound = new Audio();
 reloadSound.src = "Gun+Reload.mp3";
 
-var spawnTime;
-var lastSpawn;
-//window.onload =
+//onload function for window.
 function load(){
     canvas = document.getElementById('gameCanvas');
     canvasContext = canvas.getContext('2d');
-
-    HighScoreCheck();
+    localStorage.clear();
+    highScoreCheck();
     init();
 
-    canvasX = canvas.width/2;
-    canvasY = canvas.height-30;
 
     if(!gameOverScreen){
         gameLoop();
     }
 }
 
-    function aSprite(x, y, imageSRC, velx, vely){
+//default sprite constructor
+function aSprite(x, y, imageSRC, velx, vely)
+{
     this.zindex = 0;
     this.x = x;
     this.y = y;
@@ -104,28 +97,34 @@ function load(){
     this.sImage.src = imageSRC;
 }
 
+//render the background
 aSprite.prototype.renderF = function (width, height){
     canvasContext.drawImage(this.sImage, this.x, this .y, width, height);
 }
 
+// render the sprite
 aSprite.prototype.render = function(){
     canvasContext.drawImage(this.sImage, this.x, this.y);
 }
+
+//function designed to return a sprite to a random spawn point should it go off screen
 aSprite.prototype.updatePos = function(){
 if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0)
     {
-        this.x = GenRandom(canvas.width/5, (canvas.width/5)*4);
-        this.y = GenRandom(canvas.height/5, (canvas.height/5)*4);
-        this.vx = GenRandom(100, -100);
-        this.vy = GenRandom(100, -100);
+        this.x = genRandom(canvas.width/5, (canvas.width/5)*4);
+        this.y = genRandom(canvas.height/5, (canvas.height/5)*4);
+        this.vx = genRandom(100, -100);
+        this.vy = genRandom(100, -100);
     }
 }
 
-function GenRandom(max, min)
+//Generate a random number between a minimum (inclusive) value and a maximum (non inclusive) value
+function genRandom(max, min)
 {
     return Math.random()*(max -  min) + min;
 }
 
+//function for each individual sprites update loop
 aSprite.prototype.update = function(deltaTime){
 
     this.x += deltaTime * this.vx;
@@ -133,22 +132,18 @@ aSprite.prototype.update = function(deltaTime){
 
 }
 
-
+//initialisation for the game state
 function init(){
 
     if(canvas.getContext){
-//Set Event Listeners for window, mouse and touch
 
-        //styleText("black", 8 + "pt arial", "left", "top");
+        //Set Event Listeners for window, mouse and touch
         window.addEventListener('resize', resizeCanvas, false);
         window.addEventListener('orientationchange', resizeCanvas, false);
-
         canvas.addEventListener("touchstart", touchDown, false);
         canvas.addEventListener("touchmove", touchXY, true);
         canvas.addEventListener("touchend", touchUp, false);
-
         document.body.addEventListener("touchcancel", touchUp, false);
-
         resizeCanvas();
 
         scene1Image = new aSprite(0, 0, "scene1.png", 0, 0);
@@ -165,20 +160,21 @@ function init(){
         sEnemy3 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -30,60);
         sEnemy4 =  new aSprite(canvas.width/2,canvas.height/2, "duck.png", -50,0);
 
-        enemies = [sEnemy0, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
-        startTimeMS = Date.now();
-        lastSpawn = Date.now();
-
         endingImage = new aSprite(0, 0, "endScene.png", 0, 0);
         replayButton = new aSprite(canvas.width/2, canvas.height/2, "replay.png", 0, 0);
+
+        enemies = [sEnemy0, sEnemy1, sEnemy2, sEnemy3, sEnemy4];
+        startTimeMS = Date.now();
     }
 }
 
+//function to set canvas size
 function resizeCanvas(){
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
+//Basic loop for the game to function
 function gameLoop(){
     if (backSndPlaying == false)
     {
@@ -186,7 +182,6 @@ function gameLoop(){
         backgroundSound.loop = true;
         backSndPlaying = true;
     }
-    //setInterval(backgroundSound.play, 179000);
     var elapsed = (Date.now() - startTimeMS)/1000;
     update(elapsed);
     render(elapsed);
@@ -195,6 +190,7 @@ function gameLoop(){
     gameTimer-=elapsed;
 }
 
+//Overall render Function for the program, calls the render function on each sprite dependant on which scene
 function render(delta){
     if (menuScreen)
     {
@@ -230,19 +226,19 @@ function render(delta){
     {
          endingImage.renderF(canvas.width, canvas.height);
          replayButton.render();
-         if (newHighScore && newEndless)
+         if (newHighScore && newEndless == null)
          {
             canvasContext.fillText("Congrats! You got a new HighScore: "+ localStorage.getItem('high') + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
          }
-         if (!newHighScore && newEndless)
+         if (!newHighScore && newEndless == null)
          {
             canvasContext.fillText("Congrats! You got: "+ displayScore + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
          }
-         if (newEndless)
+         if (newEndless && newHighScore == null)
          {
             canvasContext.fillText("Congrats! You got a new endless mode HighScore: "+ localStorage.getItem('endless') + " You beat: " + oldScore, canvas.width/5, canvas.height/2);
          }
-         if (!newEndless)
+         if (!newEndless && newHighScore == null)
          {
             canvasContext.fillText("Congrats! You got: "+ displayScore + " Your score to beat is: " + oldScore, canvas.width/5, canvas.height/2);
          }
@@ -250,6 +246,7 @@ function render(delta){
 }
 
 
+//Game update loop called before the render fucntion each frame to update positions
 function update(delta){
 
 if (menuScreen == true)
@@ -276,7 +273,6 @@ if (menuScreen == true)
                 if (gameTimer < 0)
                 {
                     enemies[i].updatePos();
-                    lastSpawn = Date.now();
                 }
             }
         }
@@ -289,10 +285,10 @@ if (menuScreen == true)
             {
                 if (round == 6)
                 {
-                    EndSceneSetup();
+                    endSceneSetup();
                     gameScreen = false;
                     gameOverScreen = true;
-                    highScore = localStorage.getItem('high')
+
                 }
             }
             if (endlessScene)
@@ -305,12 +301,9 @@ if (menuScreen == true)
             }
         }
     }
-    if (gameOverScreen)
-    {
-
-    }
 }
 
+//collision detection function called each time the screen is tappec
 function collisionDetection()
 {
     if (gameScreen || endlessScene)
@@ -345,13 +338,18 @@ function collisionDetection()
         }
 
         if (lastPt.x < sHunter.x + sHunter.sImage.width && lastPt.x > sHunter.x &&
-            lastPt.y > sHunter.y && lastPt.y < sHunter.y + sHunter.sImage.height)
+            lastPt.y > sHunter.y && lastPt.y < sHunter.y + sHunter.sImage.height && endlessScene)
         {
-            highEndless = localStorage.getItem('endless');
-            EndSceneSetup();
+
+            endSceneSetup();
             enemyHit = true;
             endlessScene = false;
             gameOverScreen = true;
+        }
+        if (enemyHit == false)
+        {
+           score--;
+
         }
     }
 
@@ -395,14 +393,11 @@ function collisionDetection()
          }
 
     }
-    if (enemyHit == false)
-    {
-       score--;
 
-    }
     enemyHit = false;
 }
 
+//sets the variables needed for the font
 function styleText(txtColour, txtFont, txtAlign, txtBaseline){
     canvasContext.fillStyle = txtColour;
     canvasContext.font = txtFont;
@@ -410,12 +405,14 @@ function styleText(txtColour, txtFont, txtAlign, txtBaseline){
     canvasContext.textBaseline = txtBaseline;
 }
 
+//called at time the finger leaves the screen
 function touchUp(evt){
     evt.preventDefault();
     // Terminate touch path
     lastPt = null;
 }
 
+//called when the screen is touched
 function touchDown(evt){
     evt.preventDefault();
     touchXY(evt);
@@ -432,17 +429,15 @@ function touchDown(evt){
                 emptySound.play();
             }
         }
-    if (menuScreen)
-    {
-        collisionDetection();
-    }
-    if(gameOverScreen)
+    if (menuScreen || gameOverScreen)
     {
         collisionDetection();
     }
 }
 
-    function touchXY(evt){
+//called to determine the location of the touch
+function touchXY(evt)
+{
     evt.preventDefault();
     if (lastPt != null){
         var touchX = evt.touches[0].pageX - canvas.offsetLeft;
@@ -456,7 +451,7 @@ function touchDown(evt){
 
 
 
-
+//creates the array of particles, called when a duck is touched
 function createParticleArray(xPos, yPos, theCanvasContext)
 {
     //Adds 10 particles to thearray with random positions
@@ -467,6 +462,7 @@ function createParticleArray(xPos, yPos, theCanvasContext)
     renderP(theCanvasContext);
 }
 
+//the creation function for each particle
 function create(startX, startY)
 {
     this.x = startX;
@@ -535,44 +531,50 @@ function renderP(theCanvasContext)
     }
 }
 
-function EndSceneSetup()
+//Sets up the final scene to check the high scores and set them to the player's score if necessary
+function endSceneSetup()
 {
     if (gameScreen)
     {
+        highScore = localStorage.getItem('high')
         if (highScore < score)
         {
             oldScore = highScore;
             console.log ("new high score: " + score + " old high score: " + highScore);
             localStorage.setItem('high', score)
             newHighScore = true;
-            newEndless = false;
+            newEndless = null;
         }
         else
         {
             oldScore = highScore;
             displayScore = score;
             newHighScore = false;
-            newEndless = false;
+            newEndless = null;
         }
     }
     if (endlessScene)
     {
+        highEndless = localStorage.getItem('endless');
         if (highEndless < score)
         {
             oldScore = highEndless;
             localStorage.setItem('endless', score);
-            newEndlessw = true;
+            newEndless = true;
+            newHighScore = null;
         }
         else
         {
             oldScore = highEndless;
             displayScore = score;
             newEndless = false;
+            newHighScore = null;
         }
     }
 }
 
-function HighScoreCheck()
+//used to ensure the current system has a high score stored to avoid players current score being compared to null
+function highScoreCheck()
 {
     if (localStorage.getItem('high') == null)
     {
